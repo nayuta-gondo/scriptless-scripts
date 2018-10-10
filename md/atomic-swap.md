@@ -200,12 +200,24 @@ Ta = taG
 s'1a = ta + k1a + H(P1 || R1 || m1)x1a
 s'2a = ta + k2a + H(P2 || R2 || m2)x2a
 
+// 2+ verify
+s'1aG = Ta + R1a + H(P1 || R1 || m1)P1a
+s'2aG = Ta + R2a + H(P2 || R2 || m2)P2a
+
 // 3
 s1b = k1b + H(P1 || R1 || m1)x1b
+
+// 3+ verify
+s1bG = R1b + H(P1 || R1 || m1)P1b
 
 // 4
 s1a = k1a + H(P1 || R1 || m1)x1a
 s1 = s1a + s1b
+
+// 4+ verify
+s1 = R1 + H(P1 || R1 || m1)P1
+or
+s1a = R1a + H(P1 || R1 || m1)P1a
 
 // 5
 s1a = s1 - s1b
