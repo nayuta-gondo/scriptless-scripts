@@ -5,12 +5,21 @@ Multi-hop locks are protocols that allow two parties to exchange coins and proof
 Instead, they are connected through intermediate hops such that every hop has a shared funding multisig output with the next hop.
 Multi-hop locks based on cryptographic hashes instead of scriptless scripts are used in the [Lightning Network protocol version 1.0](https://github.com/lightningnetwork/lightning-rfc) to route payments.
 
+Multi-hop locksは、mutual funding multisig outputを必要とせずに、2者がコインとproof of paymentを交換できるようにするプロトコルです。
+代わりに、各ホップがネクストホップとshared funding multisig outputを持つように、中間ホップを介して接続されます。
+[Lightning Network protocol version 1.0]では、支払いをルーティングするために、scriptless scriptsではなくcryptographic hashesに基づくMulti-hop locksが使用されています。
+
 Scriptless script multi-hop locks were introduced in a [post to the mimblewimble mailing list](https://lists.launchpad.net/mimblewimble/msg00086.html) and formally defined in the paper [Privacy-preserving Multi-hop Locks for Blockchain Scalability and Interoperability](https://eprint.iacr.org/2018/472.pdf).
 By using scriptless scripts they result in smaller transactions which look like regular transactions and therefore improve privacy.
 More importantly, they allow [payment decorrelation](https://medium.com/@rusty_lightning/decorrelation-of-lightning-payments-7b6579db96b0) which means that hops in a multi-hop lock can not determine (absent timing and coin amount analysis) if they are on the same path, i.e. they don't know if they are forwarding the same payment.
 Correlation attacks are especially problematic if the first and last intermediate hops are colluding because they would learn source and destination of a payment.
 In addition, scriptless script multi-hop locks enable improved proof of payment and atomic multi path payments (see below).
 
+Scriptless script multi-hop locksは、[post to the mimblewimble mailing list]で導入され、[Privacy-preserving Multi-hop Locks for Blockchain Scalability and Interoperability]で正式に定義されています。
+scriptless scriptsを使用することによって、それらは通常のトランザクションのように見え、それ故にプライバシーを改善するより小さなトランザクションをもたらします。
+さらに重要なことに、それらは[支払いの無相関化]を与えます。これはmulti-hop lockのホップが（不在のタイミングとコインの量を（XXX: ???））決定できないことを意味します、それらが同じ経路上にあるかどうか。すなわち彼らが同じ支払いを送金しているかどうかわからない。
+最初と最後の中間ホップが結託している場合、相関攻撃は特に問題になります。これは、支払いの送信元と送信先を学習するためです。
+さらに、scriptless script multi-hop locksにより、proof of paymentとatomic multi path paymentsが向上します（下記参照）。
 
 Notation
 ---
@@ -18,6 +27,14 @@ Notation
 - `adaptor_sig(i,m,T) := psig(i,m,t*G) + t`
 - `sig(m,T) = psig(i,m,T) + adaptor_sig(j,m,T)` is the completed 2-of-2 MuSig from user i and j. It can be computed from a partial signature and an adaptor signature.
 
+- `psig(i,m,T) := ki + H(R+T,m)*xi`は、nonce `R`を結合した、`m`に対するユーザー`i`からの部分的な2-of-2 MuSigです（Rは、以下に定義されている右のロックRと関係がなく、我々は再びnonceを意味するためにRを使用しない）。
+- `adaptor_sig(i,m,T) := psig(i,m,t*G) + t`
+- `sig(m,T) = psig(i,m,T) + adaptor_sig(j,m,T)`は、ユーザーiとjからの完成した2-of-2 MuSigです。部分署名とアダプター署名から計算できます。
+
+XXX: `sig(m,T) = psig(i,m,T) + adaptor_sig(j,m,T)`<br>
+XXX: = `ki + H(R+T,m)*xi + psig(j,m,T) + t`<br>
+XXX: = `ki + H(R+T,m)*xi + kj + H(R+T,m)*xj + t`<br>
+XXX: = `ki + kj + H(R+T,m)*(xi+xj) + t`<br>
 
 Protocol
 ---
@@ -28,11 +45,17 @@ In the setup phase the payee chooses `z` at random and sends the payer `z*G`.
 The payer will set up the multi-hop locks such that a successful payment reveals `z` to her and only her.
 Knowledge of `z` can be a proof of payment which is similar in concept to payment preimages in the Lightning v1.0 (see section below for details).
 
+セットアップ段階において、受取人はランダムに`ｚ`を選び、支払人`ｚ*Ｇ`を送る。
+支払人は、成功した支払いが彼女と彼女だけに `z`を明らかにするようにmulti-hop locksを設定します。
+`z`を知っていることは、Lightning v1.0の支払いのプリイメージと概念が似ているproof of paymentとなります（詳細は以下のセクションを参照してください）。
+
 We picture the payment starting from the payer on the left side through intermediate hops to the payee on the right side.
 The setup phase continues with the payer setting up a tuple `(Li,yi,Ri)` consisting of the *left lock* `Li` and *right lock* `Ri` for every hop `i` in the following way:
 Every `yi` is a scalar uniformly chosen at random.
 The payers own left lock `L0` is set to `z*G` which was previously received from the payer.
 Now for every lock `Ri` for hop `0<=i<n` and `Lj` for hop `j=i+1` the payer sets `Ri <- Li + yi*G` and `Lj <- Ri` (see the diagram).
+
+XXX: drawは抽選する。<br>
 
 In the update phase adjacent hops add a multisig output to their off-chain transactions similar to how they would add an HTLC output in the Lightning v1.0.
 Despite significant differences between v1.0 HTLCs and the outputs used to forward payments in scripless scripts multi-hop locks we continue to call the outputs HTLCs because they have the same purpose and work similarly on the surface.
