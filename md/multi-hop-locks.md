@@ -92,20 +92,36 @@ Therefore the update phase starts with the leftmost pair and continues to the ri
 After receiving the partial signature from the left, the right hop can complete it as soon as it learns the secret of its left lock.
 In order to reduce the overall number of communication rounds the setup phase and update phase can be merged together.
 
+したがって、更新フェーズは左端のペアから始まり、右に続きます。
+左から部分的な署名を受け取った後、右のホップは左の鍵の秘密を知るとすぐにそれを完成することができます。
+全体的な通信ラウンド数を減らすために、セットアップ段階と更新段階とを併合することができる。
+
 The settlement phase begins when the payee receives the partial signature from its left hop.
 Because the multi-hop locks were set up by the payer such that the payee knows the secret of her left lock, she can use it as the adaptor secret and create an adaptor signature.
 The adaptor signature is combined with the left hop's partial signature resulting in a final signature for the right hop's (the payee's) transaction.
 At this point the right hop can broadcast the transaction to settle on-chain.
 
+受取人が左ホップから部分的な署名を受け取ると、決済フェーズが始まります。
+multi-hop locksは、支払い先が自分の左のロックの秘密を知っているように支払い元によって設定されているので、それをアダプタの秘密として使用してアダプタ署名を作成することができます。
+アダプタ署名は、左ホップの部分署名と組み合わされて、右ホップ（受取人）の取引に対する最終的な署名となる。
+この時点で、右ホップはトランザクションをブロードキャストして、チェーン上に決済することができます。
+
 In this case the left hop notices the combined signature and learns its right lock secret by subtracting the right hop's previously received partial signature and its own partial signature.
+
+この場合、左ホップは結合署名に気付き、右ホップの以前に受信された部分署名とそれ自身の部分署名とを減算することによってその右のロックシークレットを知る。
+
 ```
 sig(tx,T) - psig(i,tx,Ri) - psig(j,tx,Lj) = adaptor_sig(j,tx,Lj) - psig(j,tx,Lj) = yj
 ```
 Alternatively, the right hop can send its secret `yj` directly to the left hop and request to update commitment (Lightning v1.0) or settlement (eltoo) transaction such that the HTLC is removed, the left hop's output amount is decreased by the payment amount and the right hop's output amount is increased by that amount.
 If the left hop would not follow up with an update, the right hop can still broadcast the transaction until the HTLC times out.
 
+あるいは、右ホップは、その秘密の`yj`を直接左ホップに送信し、HTLCが削除されるようにコミットメント（Lightning v1.0）またはsettlement（eltoo）トランザクションを更新するよう要求することができます。 支払い金額と右ホップのアウトプット金額はその金額分増加します。
+左ホップが更新をフォローアップしない場合でも、右ホップはHTLCがタイムアウトするまでトランザクションをブロードキャストできます。
+
 Either way, once the payee claims the payment, the left hop learns the right lock secret, computes its left lock secret by subtracting `yi`, computes an adaptor signature, and so on until the payer learns the proof of payment `z` which completes the payment.
 
+いずれにしても、受取人が支払いを請求すると、左ホップは右ロックシークレットを学習し、その左ロックシークレットを `yi`を引くことにより計算し、アダプタ署名を計算し、その後支払人が支払い証明`z`を学習するまで 支払いを完了します。
 
 Proof of Payment (PoP)
 ---
