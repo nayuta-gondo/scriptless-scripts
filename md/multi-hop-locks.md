@@ -56,6 +56,10 @@ The payers own left lock `L0` is set to `z*G` which was previously received from
 Now for every lock `Ri` for hop `0<=i<n` and `Lj` for hop `j=i+1` the payer sets `Ri <- Li + yi*G` and `Lj <- Ri` (see the diagram).
 
 XXX: drawは抽選する。<br>
+左側の支払人から中間ホップを経て右側の受取人までの支払いを描写します。
+以下のようにして、ホップ`i`毎に *left lock* `Li`と *right lock* `Ri`からなる組`(Li,yi,Ri)`を支払人が設定することでセットアップ段階が継続する。すべての`yi`は一様にランダムに選ばれたスカラです。
+支払人自身の左ロック`L0`は、以前に支払人から受け取った`zG`に設定される。
+今、ホップ`0<=i<n`に対するすべてのロック`Ri`およびホップ`j=i+1`に対する`Lj`に対して、支払人は`Ri <- Li + yi*G`および`Lj <- Ri`を設定する（図を参照）。
 
 In the update phase adjacent hops add a multisig output to their off-chain transactions similar to how they would add an HTLC output in the Lightning v1.0.
 Despite significant differences between v1.0 HTLCs and the outputs used to forward payments in scripless scripts multi-hop locks we continue to call the outputs HTLCs because they have the same purpose and work similarly on the surface.
@@ -63,12 +67,26 @@ Just like v1.0 HTLCs, scriptless script HTLCs have a time out condition such tha
 But otherwise scriptless script HTLCs are plain 2-of-2 MuSig outputs and the hashlock is only implicitly added to the output only when a partial signature is received (see below).
 For demonstration purposes we assume [eltoo](https://blockstream.com/eltoo.pdf)-style channels which means that both parties have symmetric state and there's no need for revocation.
 
+更新フェーズでは、隣接ホップは、Lightning v1.0でHTLC出力を追加する方法と同様に、off-chain transactionsにマルチシグ出力を追加します。
+v1.0 HTLCと、scripless scripts multi-hop locksを実行するための出力との間には大きな違いがありますが、出力は同じ目的を持ち、表面上も同様に機能するため、引き続きHTLCと呼びます。
+v1.0 HTLCと同様に、scriptless script HTLCsには、支払いが失敗した場合に左ホップが自分のコインを取り戻すことができるようなタイムアウト条件があります。
+しかしそれ以外、scriptless script HTLCsは単純な2-of-2 MuSig outputsであり、hashkockは部分的な署名が受信された場合にのみ暗黙的に出力に追加されます（下記参照）。
+デモンストレーションを目的として、[eltoo]スタイルのチャンネルを想定しています。これは、両方の当事者が対称的な状態を持ち、失効の必要がないことを意味します。
+
 If the payment does not time out, the coins in the scriptless script HTLC output shared by two adjacent hops will be spent by the right hop.
 Therefore, the right hop `j` prepares a transaction `txj` spending the HTLC and partially signs it as `psig(j,txj,Lj)` which is similar to a regular partial signature except that its left lock `Lj` is added to the combined signature nonce.
 The left hop verifies the partial signature and sends its own partial signature for `txj` to the right hop in the following two cases:
 
+支払いがタイムアウトしない場合、隣接する2つのホップで共有されるscriptless script HTLC output内のコインが右ホップで消費されます。
+したがって、右ホップ`j`は、HTLCを使用するトランザクション`txj`を準備し、結合署名nonceが左ロック`Lj`に追加されること以外は通常の部分署名と同様である`psig(j,txj,Lj)`として部分署名する。
+以下の２つの場合には、左ホップは部分署名を検証し、それ自身の`txj`に対する部分署名を右ホップに送る。
+
 - the left hop is the payer
 - the left hop `i` received a signature `psig(i-1, txi, T-yi*G)` from the preceding hop `i-1` for the left hops transaction `txi`. In combination with the partial signature just received from the right hop, it is guaranteed that as soon as the right hop spends the coins, the left hop can open its left lock and spend the coins with `txi` as we will see below.
+
+- 左のホップは支払人です
+- 左ホップ`ｉ`は、左ホップ・トランザクション`txi`に対して先行ホップ`i-1`から署名`psig(i-1, txi, T-yi*G)`を受信した。
+右ホップから受け取ったばかりの部分的署名と組み合わせて、右ホップがコインを使うとすぐに、左ホップは左ロックを開き、以下に示すように`txi`でコインを使うことができることが保証されます。
 
 Therefore the update phase starts with the leftmost pair and continues to the right.
 After receiving the partial signature from the left, the right hop can complete it as soon as it learns the secret of its left lock.
