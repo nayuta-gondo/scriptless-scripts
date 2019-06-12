@@ -27,19 +27,22 @@ Notation
 - `adaptor_sig(i,m,T) := psig(i,m,t*G) + t`
 - `sig(m,T) = psig(i,m,T) + adaptor_sig(j,m,T)` is the completed 2-of-2 MuSig from user i and j. It can be computed from a partial signature and an adaptor signature.
 
-- `psig(i,m,T) := ki + H(R+T,m)*xi`は、nonce `R`を結合した、`m`に対するユーザー`i`からの部分的な2-of-2 MuSigです（Rは、以下に定義されている右のロックRと関係がなく、我々は再びnonceを意味するためにRを使用しない）。
+- `psig(i,m,T) := ki + H(R+T,m)*xi`は、結合nonce `R`と共に、`m`に対するユーザー`i`からの部分的な2-of-2 MuSigです（Rは、以下に定義されている右のロックRと関係がなく、我々は再びnonceを意味するためにRを使用しない）。
 - `adaptor_sig(i,m,T) := psig(i,m,t*G) + t`
 - `sig(m,T) = psig(i,m,T) + adaptor_sig(j,m,T)`は、ユーザーiとjからの完成した2-of-2 MuSigです。部分署名とアダプター署名から計算できます。
 
+XXX: `R = ki*G + kj*G`だろう<br>
 XXX: `sig(m,T) = psig(i,m,T) + adaptor_sig(j,m,T)`<br>
-XXX: = `ki + H(R+T,m)*xi + psig(j,m,T) + t`<br>
+XXX: `sig(m,T) = psig(i,m,T) + psig(j,m,T) + t`<br>
 XXX: = `ki + H(R+T,m)*xi + kj + H(R+T,m)*xj + t`<br>
-XXX: = `ki + kj + H(R+T,m)*(xi+xj) + t`<br>
+XXX: = `ki + kj + t + H(R+T,m)*(xi+xj)`<br>
 
 Protocol
 ---
 
 ![multi-hop-locks](images/multi-hop-locks.png)
+
+XXX: 図の中でadaptor_sigの三番目の引数が点ではなく、スカラになっているのでおかしい。
 
 In the setup phase the payee chooses `z` at random and sends the payer `z*G`.
 The payer will set up the multi-hop locks such that a successful payment reveals `z` to her and only her.
@@ -70,7 +73,7 @@ For demonstration purposes we assume [eltoo](https://blockstream.com/eltoo.pdf)-
 更新フェーズでは、隣接ホップは、Lightning v1.0でHTLC出力を追加する方法と同様に、off-chain transactionsにマルチシグ出力を追加します。
 v1.0 HTLCと、scripless scripts multi-hop locksを実行するための出力との間には大きな違いがありますが、出力は同じ目的を持ち、表面上も同様に機能するため、引き続きHTLCと呼びます。
 v1.0 HTLCと同様に、scriptless script HTLCsには、支払いが失敗した場合に左ホップが自分のコインを取り戻すことができるようなタイムアウト条件があります。
-しかしそれ以外、scriptless script HTLCsは単純な2-of-2 MuSig outputsであり、hashkockは部分的な署名が受信された場合にのみ暗黙的に出力に追加されます（下記参照）。
+しかしそれ以外、scriptless script HTLCsは単純な2-of-2 MuSig outputsであり、hashlockは部分的な署名が受信された場合にのみ暗黙的に出力に追加されます（下記参照）。
 デモンストレーションを目的として、[eltoo]スタイルのチャンネルを想定しています。これは、両方の当事者が対称的な状態を持ち、失効の必要がないことを意味します。
 
 If the payment does not time out, the coins in the scriptless script HTLC output shared by two adjacent hops will be spent by the right hop.
@@ -78,15 +81,19 @@ Therefore, the right hop `j` prepares a transaction `txj` spending the HTLC and 
 The left hop verifies the partial signature and sends its own partial signature for `txj` to the right hop in the following two cases:
 
 支払いがタイムアウトしない場合、隣接する2つのホップで共有されるscriptless script HTLC output内のコインが右ホップで消費されます。
-したがって、右ホップ`j`は、HTLCを使用するトランザクション`txj`を準備し、結合署名nonceが左ロック`Lj`に追加されること以外は通常の部分署名と同様である`psig(j,txj,Lj)`として部分署名する。
+したがって、右ホップ`j`は、HTLCを使用するトランザクション`txj`を準備し、結合署名nonceに左ロック`Lj`が追加されること以外は通常の部分署名と同様である`psig(j,txj,Lj)`として部分署名する。
 以下の２つの場合には、左ホップは部分署名を検証し、それ自身の`txj`に対する部分署名を右ホップに送る。
+
+XXX: `psig(j,txj,Lj) = kj + H(Rij+Lj,txj)*xj`<br>
+XXX: `txj`はHTLC outputを消費するtx<br>
+XXX: HTLC outputはmultisig
 
 - the left hop is the payer
 - the left hop `i` received a signature `psig(i-1, txi, T-yi*G)` from the preceding hop `i-1` for the left hops transaction `txi`. In combination with the partial signature just received from the right hop, it is guaranteed that as soon as the right hop spends the coins, the left hop can open its left lock and spend the coins with `txi` as we will see below.
 
 - 左のホップは支払人です
 - 左ホップ`ｉ`は、左ホップ・トランザクション`txi`に対して先行ホップ`i-1`から署名`psig(i-1, txi, T-yi*G)`を受信した。
-右ホップから受け取ったばかりの部分的署名と組み合わせて、右ホップがコインを使うとすぐに、左ホップは左ロックを開き、以下に示すように`txi`でコインを使うことができることが保証されます。
+右ホップから受け取った部分的署名との組み合わせで、右ホップがコインを使うとすぐに、左ホップは左ロックを開き、以下に示すように`txi`でコインを使うことができることが保証されます。
 
 Therefore the update phase starts with the leftmost pair and continues to the right.
 After receiving the partial signature from the left, the right hop can complete it as soon as it learns the secret of its left lock.
@@ -113,6 +120,13 @@ In this case the left hop notices the combined signature and learns its right lo
 ```
 sig(tx,T) - psig(i,tx,Ri) - psig(j,tx,Lj) = adaptor_sig(j,tx,Lj) - psig(j,tx,Lj) = yj
 ```
+
+XXX: Bob - Carol間で<br>
+XXX: jホップ<br>
+XXX: adaptor_sig(j,tx,Lj) - psig(j,tx,Lj) = yj<br>
+XXX: iホップ<br>
+XXX: sig(tx,T) - psig(i,tx,Ri) - psig(j,tx,Lj) = yj<br>
+
 Alternatively, the right hop can send its secret `yj` directly to the left hop and request to update commitment (Lightning v1.0) or settlement (eltoo) transaction such that the HTLC is removed, the left hop's output amount is decreased by the payment amount and the right hop's output amount is increased by that amount.
 If the left hop would not follow up with an update, the right hop can still broadcast the transaction until the HTLC times out.
 
