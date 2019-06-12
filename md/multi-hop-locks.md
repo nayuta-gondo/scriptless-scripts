@@ -130,15 +130,30 @@ Therefore, the proof of payment can be used to authenticate the payer to the pay
 It is not necessary to reveal the PoP itself but instead a signature of `z*G` can be provided.
 Due to payment decorrelation intermediate hops can not associate a payment with the PoP.
 
+Lightning v1.0との主な違いは、支払い証明（`z`）は支払い者によってのみ取得され、ルート上のすべてのホップによっては取得されないことです。
+したがって、支払い証明は、支払い元を支払い先に認証するために使用できます。
+PoP自体を明らかにする必要はないが、代わりに`z*G`の署名を提供することができる。
+支払い非相関のため、中間ホップは支払いをPoPと関連付けることができません。
+
 Obviously, not only the payer is able prove knowledge of `z`.
 Everyone the payee or payer choose to share `z` with can do so too which makes it unclear who actually paid.
 Therefore a signed statement (invoice) from payee should be sent to payer that includes `z*G` and the payers public key.
 Then the PoP is both a signature with the PoP and the payers secret key which can only be provided by the payer (or everyone the payer chooses to collaborate with).
 
+明らかに、支払人だけが`z`の知識を証明できるわけではありません。
+受取人または支払人が `z`を共有することを選択した人は誰でもそうすることができ、実際に誰が支払ったのかが不明確になります。
+したがって、受取人からの`z*G`と支払人の公開鍵を含む署名入りの明細書（請求書）を支払人に送ってください。
+その場合、PoPは、PoPと支払人（または支払人が協力することを選択したすべての人）によってのみ提供されることができる支払人の秘密鍵の両方による署名です。
+
+XXX: payerの公開鍵はnode_idである必要はなく、一時的な秘密鍵に対応するものでいいだろう。
+
 Ideally a single static invoice would be payable by multiple parties allowing spontaneous payments without requiring extra communication with the payee.
 But this is not compatible with PoPs because the PoP must be created from fresh randomness for every payment.
 However, recurring payments from a single payer [can be done using hash chains](https://lists.linuxfoundation.org/pipermail/lightning-dev/2018-November/001496.html).
 
+受取人との特別な連絡を必要とせずに、単一の静的請求書が複数の当事者から支払われて自発的な支払いが可能になるのが理想的だ。
+しかし、これはPoPと互換性がありません。これは、PoPはすべての支払いに対して新しいランダム性から作成する必要があるためです。
+ただし、1人の支払人からの定期的な支払いを[ハッシュチェーンを使用して行うことができます]。
 
 Atomic Multipath Payments (AMP)
 ---
