@@ -91,7 +91,7 @@ XXX: HTLC outputはmultisig
 
 - 左のホップは支払人です
 - 左ホップ`ｉ`は、左ホップ・トランザクション`txi`に対して先行ホップ`i-1`から署名`psig(i-1, txi, T-yi*G)`を受信した。
-右ホップから受け取ったばかりの部分的署名と組み合わせて、右ホップがコインを使うとすぐに、左ホップは左ロックを開き、以下に示すように`txi`でコインを使うことができることが保証されます。
+右ホップから受け取った部分的署名との組み合わせで、右ホップがコインを使うとすぐに、左ホップは左ロックを開き、以下に示すように`txi`でコインを使うことができることが保証されます。
 
 Therefore the update phase starts with the leftmost pair and continues to the right.
 After receiving the partial signature from the left, the right hop can complete it as soon as it learns the secret of its left lock.
@@ -118,6 +118,13 @@ In this case the left hop notices the combined signature and learns its right lo
 ```
 sig(tx,T) - psig(i,tx,Ri) - psig(j,tx,Lj) = adaptor_sig(j,tx,Lj) - psig(j,tx,Lj) = yj
 ```
+
+XXX: Bob - Carol間で<br>
+XXX: jホップ<br>
+XXX: adaptor_sig(j,tx,Lj) - psig(j,tx,Lj) = yj<br>
+XXX: iホップ<br>
+XXX: sig(tx,T) - psig(i,tx,Ri) - psig(j,tx,Lj) = yj<br>
+
 Alternatively, the right hop can send its secret `yj` directly to the left hop and request to update commitment (Lightning v1.0) or settlement (eltoo) transaction such that the HTLC is removed, the left hop's output amount is decreased by the payment amount and the right hop's output amount is increased by that amount.
 If the left hop would not follow up with an update, the right hop can still broadcast the transaction until the HTLC times out.
 
